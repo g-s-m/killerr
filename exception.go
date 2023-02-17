@@ -38,6 +38,7 @@ func (h Scope) Catch(f func(err error)) {
 
 	if result.err != nil {
 		f(result.err)
+		close(h.exceptionLine)
 	}
 }
 
@@ -46,7 +47,7 @@ func (h Scope) Throw(err error) {
 	runtime.Goexit()
 }
 
-func (h Scope) CatchIs(target error, f func(err error)) {
+func (h Scope) CatchIs(target error, f func(err error)) Scope {
 	result, ok := <-h.exceptionLine
 
 	if errors.Is(result.err, target) {
@@ -59,4 +60,6 @@ func (h Scope) CatchIs(target error, f func(err error)) {
 			go h.Throw(result.err)
 		}
 	}
+
+	return h
 }
