@@ -146,4 +146,17 @@ func TestException(t *testing.T) {
 			assert.Fail(t, "wrong execution")
 		})
 	})
+
+	t.Run("throw with wrong catch", func(t *testing.T) {
+		error1 := errors.New("error1")
+		error2 := errors.New("error2")
+		ex := killerr.Try(func(h killerr.Scope) {
+			h.Throw(error2)
+			assert.Fail(t, "wrong execution")
+		})
+		ex.CatchIs(error1, func(err error) {
+			assert.Fail(t, "wrong execution")
+		})
+		assert.True(t, true)
+	})
 }
