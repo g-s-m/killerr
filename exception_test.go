@@ -9,55 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func fooError(ex killerr.Scope) {
-	ex.Throw(errors.New("some error"))
-}
-
-func fooAnotherError(ex killerr.Scope) {
-	ex.Throw(errors.New("another error"))
-}
-
-func fooLogicNoErr() {
-}
-
-func fooLogic(ex killerr.Scope) {
-	fooLogicNoErr()
-	fooError(ex)
-}
+func emptyFunc() {}
 
 func TestException(t *testing.T) {
 	t.Run("raise a error", func(t *testing.T) {
-		ex := killerr.Try(func(h killerr.Scope) {
-			fooLogic(h)
+		killerr.Try(func(h killerr.Scope) {
+			h.Throw(errors.New("some error"))
 			assert.Fail(t, "wrong execution")
-		})
-
-		ex.Catch(func(err error) {
+		}).Catch(func(err error) {
 			assert.ErrorContains(t, err, "some error")
 		})
 	})
 	t.Run("not raise a error", func(t *testing.T) {
-		ex := killerr.Try(func(h killerr.Scope) {
-			fooLogicNoErr()
-		})
-
-		ex.Catch(func(err error) {
+		killerr.Try(func(h killerr.Scope) {
+			emptyFunc()
+		}).Catch(func(err error) {
 			assert.Fail(t, "function should not raise a error")
 		})
 	})
 	t.Run("nested raise a error", func(t *testing.T) {
-		ex := killerr.Try(func(h killerr.Scope) {
-			fooLogicNoErr()
-			ex2 := killerr.Try(func(hh killerr.Scope) {
-				fooAnotherError(hh)
-			})
-
-			ex2.Catch(func(err error) {
+		killerr.Try(func(h killerr.Scope) {
+			emptyFunc()
+			killerr.Try(func(hh killerr.Scope) {
+				hh.Throw(errors.New("another error"))
+			}).Catch(func(err error) {
 				assert.ErrorContains(t, err, "another error")
-				fooError(h)
+				h.Throw(errors.New("some error"))
 			})
-		})
-		ex.Catch(func(err error) {
+		}).Catch(func(err error) {
 			assert.ErrorContains(t, err, "some error")
 		})
 	})
@@ -78,14 +57,12 @@ func TestException(t *testing.T) {
 		error1 := errors.New("error1")
 		error2 := errors.New("error2")
 
-		ex := killerr.Try(func(h killerr.Scope) {
+		killerr.Try(func(h killerr.Scope) {
 			h.Throw(error2)
 			assert.Fail(t, "wrong execution")
-		})
-		ex.CatchIs(error1, func(err error) {
+		}).CatchIs(error1, func(err error) {
 			assert.Fail(t, "wrong exception")
-		})
-		ex.CatchIs(error2, func(err error) {
+		}).CatchIs(error2, func(err error) {
 			assert.ErrorIs(t, error2, err)
 		})
 	})
@@ -93,15 +70,15 @@ func TestException(t *testing.T) {
 		error1 := errors.New("error1")
 		error2 := errors.New("error2")
 
-		ex := killerr.Try(func(h killerr.Scope) {
+		scope := killerr.Scope{}
+		killerr.Try(func(h killerr.Scope) {
+			scope = h
 			h.Throw(error1)
 			assert.Fail(t, "wrong execution")
-		})
-		ex.CatchIs(error1, func(err error) {
+		}).CatchIs(error1, func(err error) {
 			assert.ErrorIs(t, error1, err)
-			ex.Throw(error2)
-		})
-		ex.CatchIs(error2, func(err error) {
+			scope.Throw(error2)
+		}).CatchIs(error2, func(err error) {
 			assert.ErrorIs(t, error2, err)
 		})
 	})
