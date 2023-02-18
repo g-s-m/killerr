@@ -69,13 +69,41 @@ func RunMyApp() {
   }).Catch(func(err error) {
     log.Error("another error: %s", err.Error())
   })
-
 }
 ```
 
 ## Restrictions
-* `Try`, `Catch` and `Throw` won't work in different goroutines, like try-catch in other languages works in the same threaf, they would work properly only in the same goroutine
-* Order of `Catch` and `CatchIs` matters. For example if function throws `ErrInternal1` you may call `CatchIs(ErrInternal, ...)` first and then `Catch(...)` to catch ErrInternal separately of other errors.
+* If you doesn't place catch block, you will lose your error
+* `Try`, `Catch` and `Throw` won't work in different goroutines, like try-catch in other languages works in the same thread, they would work properly only in the same goroutine.
+The following code will not work correctly:
+```go
+// do not do this:
+killerr.Try(func(ex killerr.Scope) {
+  go func() {
+    ex.Throw()
+  }()
+}).Catch(func(err error){
+  ...
+})
+```
+* Order of `Catch` and `CatchIs` matters. For example if function throws `ErrInternal1` you may call `CatchIs(ErrInternal, ...)` first and then `Catch(...)` to catch ErrInternal separately of other errors. Always place `CatchIs` before `Catch` block.
+See example.
+```go
+killerr.Try(func(ex killerr.Scope) {
+    ex.Throw(ErrInternalPackage)
+  }).CatchIs(ErrInternalPackage, func(err error){
+    //this block will catch the error
+    log.Error("internal error: %s", err.Error())
+  }).Catch(func(err error) {
+    log.Error("another error: %s", err.Error())
+  })
 
-## Concerns
-* I exchange one more function argument for `if err != nil` in every line where I can see a error but I'm still thinking that this makes sence.
+  killerr.Try(func(ex killerr.Scope) {
+    ex.Throw(ErrInternalPackage)
+  }).Catch(func(err error) {
+    //this block will catch the error
+    log.Error("another error: %s", err.Error())
+  }).CatchIs(ErrInternalPackage, func(err error){
+    log.Error("internal error: %s", err.Error())
+  })
+```
