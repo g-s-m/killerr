@@ -14,52 +14,52 @@ type Scope struct {
 	catch         chan exception
 }
 
-func Try(f func(h Scope)) Scope {
-	handler := Scope{
+func Try(f func(ex Scope)) Scope {
+	ex := Scope{
 		exceptionLine: make(chan exception),
 		catch:         make(chan exception),
 	}
 
 	go func() {
-		res := <-handler.catch
-		handler.exceptionLine <- res
+		res := <-ex.catch
+		ex.exceptionLine <- res
 	}()
 
 	go func() {
-		f(handler)
-		close(handler.catch)
+		f(ex)
+		close(ex.catch)
 	}()
 
-	return handler
+	return ex
 }
 
-func (h Scope) Catch(f func(err error)) {
-	result := <-h.exceptionLine
+func (ex Scope) Catch(f func(err error)) {
+	result := <-ex.exceptionLine
 
 	if result.err != nil {
 		f(result.err)
-		close(h.exceptionLine)
+		close(ex.exceptionLine)
 	}
 }
 
-func (h Scope) Throw(err error) {
-	h.exceptionLine <- exception{err: err}
+func (ex Scope) Throw(err error) {
+	ex.exceptionLine <- exception{err: err}
 	runtime.Goexit()
 }
 
-func (h Scope) CatchIs(target error, f func(err error)) Scope {
-	result, ok := <-h.exceptionLine
+func (ex Scope) CatchIs(target error, f func(err error)) Scope {
+	result, ok := <-ex.exceptionLine
 
 	if errors.Is(result.err, target) {
 		go func() {
 			f(result.err)
-			close(h.exceptionLine)
+			close(ex.exceptionLine)
 		}()
 	} else {
 		if ok {
-			go h.Throw(result.err)
+			go ex.Throw(result.err)
 		}
 	}
 
-	return h
+	return ex
 }
