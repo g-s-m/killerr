@@ -31,3 +31,6 @@ jobs:
 
     - name: Test
       run: go test -v -race ./...
+
+    - name: Cover
+      run: go test -race -coverprofile=cover.out -coverpkg=./... -v ./... && go tool cover -html=cover.out -o cover.html
