@@ -1,7 +1,6 @@
 # killerr [![GoDoc](https://pkg.go.dev/badge/g-s-m/killerr)](https://pkg.go.dev/github.com/g-s-m/killerr) [![Build Status](https://github.com/g-s-m/killerr/actions/workflows/go.yml/badge.svg)](https://github.com/g-s-m/killerr/actions/workflows/go.yml) [![Coverage Status](https://codecov.io/gh/g-s-m/killerr/branch/main/graph/badge.svg)](https://codecov.io/gh/g-s-m/killerr)
 
 Kill "if err"(killerr) package is a simple implementation of exceptions for go language.
-Why? Because I'm tired to write "if err" every time in every layer of my app
 
 ## How to use it
 Add "github.com/g-s-m/killerr" package to your project.
